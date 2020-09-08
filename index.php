@@ -1,36 +1,130 @@
-<?php 
-if(isset($_POST['submit'])){
-    $to = "arturas19890228@gmail.com"; // this is your Email address
-    $from = $_POST['email']; // this is the sender's Email address
-    $first_name = $_POST['first_name'];
-    $last_name = $_POST['last_name'];
-    $subject = "Form submission";
-    $subject2 = "Copy of your form submission";
-    $message = $first_name . " " . $last_name . " wrote the following:" . "\n\n" . $_POST['message'];
-    $message2 = "Here is a copy of your message " . $first_name . "\n\n" . $_POST['message'];
+<?php
 
-    $headers = "From:" . $from;
-    $headers2 = "From:" . $to;
-    mail($to,$subject,$message,$headers);
-    mail($from,$subject2,$message2,$headers2); // sends a copy of the message to the sender
-    echo "Mail Sent. Thank you " . $first_name . ", we will contact you shortly.";
-    // You can also use header('Location: thank_you.php'); to redirect to another page.
+use PHPMailer\PHPMailer\PHPMailer;
+require __DIR__ . '/vendor/autoload.php';
+
+$errors = [];
+$errorMessage = '';
+
+if (!empty($_POST)) {
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $message = $_POST['message'];
+
+    if (empty($name)) {
+        $errors[] = 'Name is empty';
     }
+
+    if (empty($email)) {
+        $errors[] = 'Email is empty';
+    } else if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = 'Email is invalid';
+    }
+
+    if (empty($message)) {
+        $errors[] = 'Message is empty';
+    }
+
+
+    if (!empty($errors)) {
+        $allErrors = join('<br/>', $errors);
+        $errorMessage = "<p style='color: red;'>{$allErrors}</p>";
+    } else {
+        $mail = new PHPMailer();
+
+        // specify SMTP credentials
+        $mail->isSMTP();
+        $mail->Host = 'smtp.hostinger.lt';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'arturas19890228@gmail.com';
+        $mail->Password = 'sugalvok8';
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 2525;
+
+        $mail->setFrom($email, 'Mailtrap Website');
+        $mail->addAddress('info@padangos-gariunai.lt', 'Me');
+        $mail->Subject = 'New message from your website';
+
+        // Enable HTML if needed
+        $mail->isHTML(true);
+
+        $bodyParagraphs = ["Name: {$name}", "Email: {$email}", "Message:", nl2br($message)];
+        $body = join('<br />', $bodyParagraphs);
+        $mail->Body = $body;
+
+        echo $body;
+        if($mail->send()){
+
+            header('Location: thank-you.html'); // redirect to 'thank you' page
+        } else {
+            $errorMessage = 'Oops, something went wrong. Mailer Error: ' . $mail->ErrorInfo;
+        }
+    }
+}
+
 ?>
 
-<!DOCTYPE html>
-<head>
-<title>Form submission</title>
-</head>
+<html>
 <body>
+  <form action="/swiftmailer_form.php" method="post" id="contact-form">
+    <h2>Contact us</h2>
 
-<form action="" method="post">
-First Name: <input type="text" name="first_name"><br>
-Last Name: <input type="text" name="last_name"><br>
-Email: <input type="text" name="email"><br>
-Message:<br><textarea rows="5" name="message" cols="30"></textarea><br>
-<input type="submit" name="submit" value="Submit">
-</form>
+    <?php echo((!empty($errorMessage)) ? $errorMessage : '') ?>
+    <p>
+      <label>First Name:</label>
+      <input name="name" type="text"/>
+    </p>
+    <p>
+      <label>Email Address:</label>
+      <input style="cursor: pointer;" name="email" type="text"/>
+    </p>
+    <p>
+      <label>Message:</label>
+      <textarea name="message"></textarea>
+    </p>
 
+    <p>
+      <input type="submit" value="Send"/>
+    </p>
+  </form>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/validate.js/0.13.1/validate.min.js"></script>
+  <script>
+      const constraints = {
+          name: {
+              presence: {allowEmpty: false}
+          },
+          email: {
+              presence: {allowEmpty: false},
+              email: true
+          },
+          message: {
+              presence: {allowEmpty: false}
+          }
+      };
+
+      const form = document.getElementById('contact-form');
+
+      form.addEventListener('submit', function (event) {
+          const formValues = {
+              name: form.elements.name.value,
+              email: form.elements.email.value,
+              message: form.elements.message.value
+          };
+
+          const errors = validate(formValues, constraints);
+
+          if (errors) {
+              event.preventDefault();
+              const errorMessage = Object
+                  .values(errors)
+                  .map(function (fieldValues) {
+                      return fieldValues.join(', ')
+                  })
+                  .join("\n");
+
+              alert(errorMessage);
+          }
+      }, false);
+  </script>
 </body>
-</html> 
+</html>
