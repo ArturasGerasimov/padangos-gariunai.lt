@@ -1,130 +1,107 @@
 <?php
-
 use PHPMailer\PHPMailer\PHPMailer;
-require __DIR__ . '/vendor/autoload.php';
 
-$errors = [];
-$errorMessage = '';
+require 'vendor/autoload.php';
+    
+    $username = $_POST['number'];
 
-if (!empty($_POST)) {
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $message = $_POST['message'];
-
-    if (empty($name)) {
-        $errors[] = 'Name is empty';
-    }
-
-    if (empty($email)) {
-        $errors[] = 'Email is empty';
-    } else if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Email is invalid';
-    }
-
-    if (empty($message)) {
-        $errors[] = 'Message is empty';
-    }
-
-
-    if (!empty($errors)) {
-        $allErrors = join('<br/>', $errors);
-        $errorMessage = "<p style='color: red;'>{$allErrors}</p>";
-    } else {
-        $mail = new PHPMailer();
-
-        // specify SMTP credentials
-        $mail->isSMTP();
-        $mail->Host = 'smtp.hostinger.lt';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'arturas19890228@gmail.com';
-        $mail->Password = 'sugalvok8';
-        $mail->SMTPSecure = 'tls';
-        $mail->Port = 2525;
-
-        $mail->setFrom($email, 'Mailtrap Website');
-        $mail->addAddress('info@padangos-gariunai.lt', 'Me');
-        $mail->Subject = 'New message from your website';
-
-        // Enable HTML if needed
-        $mail->isHTML(true);
-
-        $bodyParagraphs = ["Name: {$name}", "Email: {$email}", "Message:", nl2br($message)];
-        $body = join('<br />', $bodyParagraphs);
-        $mail->Body = $body;
-
-        echo $body;
-        if($mail->send()){
-
-            header('Location: thank-you.html'); // redirect to 'thank you' page
+    $mail = new PHPMailer;
+    $mail->isSMTP();
+    $mail->Host = 'smtp.hostinger.lt';
+    $mail->Port = 587;
+    $mail->SMTPAuth = true;
+    $mail->Username = 'info@padangos-gariunai.lt';
+    $mail->Password = '9E\U]ZZcw2}mvmFd/.=E(UdHG#fk,fR~WRxg';
+    $mail->setFrom('info@padangos-gariunai.lt', $username);
+    $mail->addAddress('no-replay@padangos-gariunai.lt', 'Receiver');
+    if ($_POST['diameter'] || $_POST['width'] || $_POST['heigh'] || $_POST['number'] != ""){
+        $mail->Subject = "Laiskas nuo: ".$username; //sets up subject of the email
+        $mail->isHTML(false);
+        $mail->Body = <<<EOT
+            Skersmuo: {$_POST['diameter']}
+            Plotis: {$_POST['width']}
+            Aukstis: {$_POST['heigh']}
+            Numeris: {$_POST['number']}
+            EOT;
+        if (!$mail->send()) {
+            $msg = 'Sorry, something went wrong. Please try again later.';
         } else {
-            $errorMessage = 'Oops, something went wrong. Mailer Error: ' . $mail->ErrorInfo;
+            $msg = 'Aciu, jusu laiskas issiustas';
         }
+    } else {
+        $msg = 'Share it with us!';
     }
-}
-
 ?>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Contact form</title>
+    </head>
+    <body>
+        <h1>Do You Have Anything in Mind?</h1>
+        <?php if (!empty($msg)) {
+            echo "<h2>$msg</h2>";
+        } ?>
+        <form method="POST">
 
-<html>
-<body>
-  <form action="/swiftmailer_form.php" method="post" id="contact-form">
-    <h2>Contact us</h2>
+        <!-- 
+        diamemtras - diameter+
+        plotis - width+
+        aukstis - heigh+
+        numeris - number+
+        -->
+            <label for="diameter"><input type="text" name="diameter" id="diameter" placeholder="Diamentras" required></label><br><br>
+            <label for="width"><input type="number" name="width" id="width" placeholder="Plotis"  required></label><br><br>
+            <label for="heigh"><input type="number" name="heigh" id="heigh" placeholder="Aukstis"  required></label><br><br>
+            <label for="number"><input type="number" name="number" id="number" placeholder="Telefono numeris" required></label><br><br>
+            <input type="submit" value="Send">
+        </form>
+    </body>
+</html>
 
-    <?php echo((!empty($errorMessage)) ? $errorMessage : '') ?>
-    <p>
-      <label>First Name:</label>
-      <input name="name" type="text"/>
-    </p>
-    <p>
-      <label>Email Address:</label>
-      <input style="cursor: pointer;" name="email" type="text"/>
-    </p>
-    <p>
-      <label>Message:</label>
-      <textarea name="message"></textarea>
-    </p>
-
-    <p>
-      <input type="submit" value="Send"/>
-    </p>
-  </form>
   <script src="//cdnjs.cloudflare.com/ajax/libs/validate.js/0.13.1/validate.min.js"></script>
   <script>
       const constraints = {
-          name: {
-              presence: {allowEmpty: false}
-          },
-          email: {
-              presence: {allowEmpty: false},
-              email: true
-          },
-          message: {
-              presence: {allowEmpty: false}
-          }
+        diameter: {
+            presence: {allowEmpty: false}
+        },
+        width: {
+            presence: {allowEmpty: false},
+        },
+        heigh: {
+            presence: {allowEmpty: false},
+        },
+        number: {
+            presence: {allowEmpty: false}
+        }
       };
 
       const form = document.getElementById('contact-form');
 
       form.addEventListener('submit', function (event) {
-          const formValues = {
-              name: form.elements.name.value,
-              email: form.elements.email.value,
-              message: form.elements.message.value
-          };
+            const formValues = {
+                diameter: form.elements.diameter.value,
+                width: form.elements.width.value,
+                heigh: form.elements.heigh.value,
+                number: form.elements.number.value
+             };
 
-          const errors = validate(formValues, constraints);
+              const errors = validate(formValues, constraints);
 
-          if (errors) {
-              event.preventDefault();
-              const errorMessage = Object
-                  .values(errors)
-                  .map(function (fieldValues) {
+            if (errors) {
+                 event.preventDefault();
+                 const errorMessage = Object
+                    .values(errors)
+                    .map(function (fieldValues) {
                       return fieldValues.join(', ')
-                  })
-                  .join("\n");
+                })
+                .join("\n");
 
               alert(errorMessage);
           }
       }, false);
+  
   </script>
 </body>
 </html>
